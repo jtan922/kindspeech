@@ -208,6 +208,16 @@
                 originalSentenceForReassessment = sentence;
             }
 
+            // ===================================================================
+            // YOUR API KEY IS PASTED HERE
+            // ===================================================================
+            const apiKey = "AIzaSyAlOvIkH19JUBN7lxHlOghsL5GJl6KB360"; 
+            
+            if (apiKey === "PASTE_YOUR_API_KEY_HERE" || !apiKey) {
+                showError("API Key is missing. Please get a key from Google AI Studio and paste it into the code.");
+                return;
+            }
+
             hideError();
             resultsDiv.classList.add('hidden');
             loader.classList.remove('hidden');
@@ -238,6 +248,8 @@
                     `;
                 }
                 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                
                 const payload = { 
                     contents: [{ role: "user", parts: [{ text: prompt }] }],
                     generationConfig: {
@@ -245,8 +257,6 @@
                         temperature: 0.8 
                     }
                 };
-                const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
@@ -254,7 +264,11 @@
                     body: JSON.stringify(payload)
                 });
 
-                if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    console.error("API Error Response:", errorBody);
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
 
                 const result = await response.json();
                 
@@ -272,12 +286,13 @@
                     updateToneIndicator(parsedJson.tone);
                     resultsDiv.classList.remove('hidden');
                 } else {
+                    console.error("Unexpected API response structure:", result);
                     throw new Error("The AI returned an unexpected response.");
                 }
 
             } catch (error) {
-                console.error("Error:", error);
-                showError("Sorry, something went wrong. Please try again.");
+                console.error("Error in handleSentenceCheck:", error);
+                showError(error.message);
             } finally {
                 loader.classList.add('hidden');
                 checkButton.disabled = false;
@@ -288,7 +303,6 @@
         // --- Helper Functions ---
         function speakText(text) {
             if (!isSpeechSynthesisSupported) return;
-            // Cancel any previous speech to avoid overlap
             window.speechSynthesis.cancel();
             
             const utterance = new SpeechSynthesisUtterance(text);
