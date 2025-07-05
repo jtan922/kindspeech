@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Polite Phrase App</title>
+    
+    <!-- iOS Home Screen App Settings -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://placehold.co/180x180/3B82F6/FFFFFF?text=😊&font=noto" onerror="this.onerror=null;this.src='https://placehold.co/180x180/3B82F6/FFFFFF?text=App';">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #mic-button {
+            transition: all 0.3s ease-in-out;
+        }
+        #mic-button.recording {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .card-glow {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3), 0 0 30px rgba(59, 130, 246, 0.2);
+        }
+        .tone-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .tone-unkind.selected { background-color: #ef4444; color: white; }
+        .tone-okay.selected { background-color: #f59e0b; color: white; }
+        .tone-kind.selected { background-color: #22c55e; color: white; }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8">
+        
+        <div class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-blue-600 dark:text-blue-400">Polite Phrase Checker</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Let's learn to speak with kindness!</p>
+        </div>
+
+        <!-- Age Selector -->
+        <div class="my-6">
+            <label for="age-slider" class="block text-lg font-medium text-gray-700 dark:text-gray-300 text-center">Child's Age: <span id="age-value" class="font-bold text-blue-600 dark:text-blue-400">8</span></label>
+            <input id="age-slider" type="range" min="3" max="18" value="8" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 mt-2">
+        </div>
+
+        <!-- Tone Indicator -->
+        <div class="my-8">
+            <label class="block text-lg font-medium text-gray-700 dark:text-gray-300 text-center mb-3">Assessed Tone</label>
+            <div id="tone-indicator" class="grid grid-cols-3 gap-2 p-1 bg-gray-200 dark:bg-gray-700 rounded-lg">
+                <button data-tone="unkind" class="tone-button tone-unkind py-2 px-4 rounded-md font-semibold text-gray-600 dark:text-gray-400">Unkind</button>
+                <button data-tone="okay" class="tone-button tone-okay py-2 px-4 rounded-md font-semibold text-gray-600 dark:text-gray-400">Okay</button>
+                <button data-tone="kind" class="tone-button tone-kind py-2 px-4 rounded-md font-semibold text-gray-600 dark:text-gray-400">Kind</button>
+            </div>
+        </div>
+
+        <!-- Primary Voice Input Section -->
+        <div class="flex flex-col items-center justify-center space-y-6 my-8">
+            <p id="mic-label" class="text-lg font-medium text-gray-700 dark:text-gray-300">Tap the microphone to speak</p>
+            <button id="mic-button" class="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-28 h-28 flex items-center justify-center shadow-lg transform hover:scale-105">
+                <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-mic"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+            </button>
+        </div>
+
+        <!-- Text Display / Secondary Input -->
+        <div class="space-y-4">
+             <label for="sentence-input" class="block text-sm font-medium text-gray-500 dark:text-gray-400 text-center">Your sentence will appear here (or you can type it):</label>
+            <textarea id="sentence-input" rows="3" class="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 transition duration-200 text-center text-lg" placeholder="..."></textarea>
+            <button id="check-button" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 ease-in-out transform hover:-translate-y-1">
+                Check My Sentence
+            </button>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loader" class="text-center py-8 hidden">
+             <div class="flex justify-center items-center space-x-2">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p class="text-lg">Checking...</p>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="mt-8 space-y-6 hidden">
+            <div id="rewritten-card" class="bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 p-5 rounded-lg card-glow">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-xl font-semibold text-green-800 dark:text-green-300">A Kinder Way to Say It:</h2>
+                    <button id="play-audio-button" title="Read aloud" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200 p-1 rounded-full hover:bg-green-100 dark:hover:bg-green-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                    </button>
+                </div>
+                <p id="rewritten-sentence" class="text-lg text-green-700 dark:text-green-200"></p>
+            </div>
+            <div id="explanation-card" class="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-500 p-5 rounded-lg">
+                <h2 class="text-xl font-semibold text-yellow-800 dark:text-yellow-300 mb-2">Why it's kinder:</h2>
+                <p id="explanation" class="text-lg text-yellow-700 dark:text-yellow-200"></p>
+            </div>
+        </div>
+        
+        <div id="error-message" class="mt-6 text-center text-red-500 font-medium hidden"></div>
+    </div>
+
+    <script>
+        // --- Element References ---
+        const checkButton = document.getElementById('check-button');
+        const sentenceInput = document.getElementById('sentence-input');
+        const loader = document.getElementById('loader');
+        const resultsDiv = document.getElementById('results');
+        const rewrittenSentenceEl = document.getElementById('rewritten-sentence');
+        const explanationEl = document.getElementById('explanation');
+        const errorMessageEl = document.getElementById('error-message');
+        const micButton = document.getElementById('mic-button');
+        const micLabel = document.getElementById('mic-label');
+        const ageSlider = document.getElementById('age-slider');
+        const ageValue = document.getElementById('age-value');
+        const toneIndicator = document.getElementById('tone-indicator');
+        const toneButtons = toneIndicator.querySelectorAll('.tone-button');
+        const playAudioButton = document.getElementById('play-audio-button');
+
+        // --- State ---
+        let originalSentenceForReassessment = "";
+
+        // --- Feature Detection ---
+        const isSpeechSynthesisSupported = 'speechSynthesis' in window;
+        if (!isSpeechSynthesisSupported) {
+            playAudioButton.style.display = 'none';
+        }
+
+        // --- Event Listeners ---
+        ageSlider.addEventListener('input', () => {
+            ageValue.textContent = ageSlider.value;
+        });
+
+        checkButton.addEventListener('click', () => handleSentenceCheck(false));
+        
+        toneButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (button.classList.contains('selected') || originalSentenceForReassessment === "") return;
+                const newTone = button.dataset.tone;
+                handleSentenceCheck(true, newTone);
+            });
+        });
+
+        // --- Voice Recognition ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            micButton.addEventListener('click', () => {
+                if (micButton.classList.contains('recording')) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            });
+
+            recognition.onstart = () => {
+                micButton.classList.add('recording', 'bg-red-500', 'hover:bg-red-600');
+                micButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                micLabel.textContent = "Listening...";
+                sentenceInput.value = "";
+                sentenceInput.placeholder = "Listening for your voice...";
+            };
+
+            recognition.onend = () => {
+                micButton.classList.remove('recording', 'bg-red-500', 'hover:bg-red-600');
+                micButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                micLabel.textContent = "Tap the microphone to speak";
+                sentenceInput.placeholder = "...";
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                sentenceInput.value = transcript;
+                setTimeout(() => checkButton.click(), 250);
+            };
+            
+            recognition.onerror = (event) => showError(`Error with speech recognition: ${event.error}`);
+
+        } else {
+            micButton.style.display = 'none';
+            micLabel.textContent = "Voice input is not supported on this browser.";
+        }
+
+        // --- Main Logic Function ---
+        async function handleSentenceCheck(isReassessment, newTone = null) {
+            const sentence = isReassessment ? originalSentenceForReassessment : sentenceInput.value.trim();
+            if (!sentence) {
+                showError("Please say or type a sentence first.");
+                return;
+            }
+            
+            if (!isReassessment) {
+                originalSentenceForReassessment = sentence;
+            }
+
+            hideError();
+            resultsDiv.classList.add('hidden');
+            loader.classList.remove('hidden');
+            checkButton.disabled = true;
+            checkButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                const age = ageSlider.value;
+                let prompt;
+
+                if (isReassessment) {
+                    prompt = `
+                        A ${age}-year-old child said: "${sentence}".
+                        The user believes the tone of this sentence is actually '${newTone}'.
+                        Based on this new understanding that the tone is '${newTone}', please perform the following:
+                        1. Rewrite the sentence into a polite, kind, or more appropriate alternative, suitable for a ${age}-year-old.
+                        2. Provide a simple, short explanation for a ${age}-year-old about the new sentence.
+                        Format the output as a JSON object with keys: "rewritten_sentence", "explanation", and "tone". The "tone" value should be '${newTone}'.
+                    `;
+                } else {
+                    prompt = `
+                        A ${age}-year-old child said: "${sentence}"
+                        Analyze this sentence and perform the following tasks:
+                        1. Classify the tone as one of three options: 'unkind', 'okay', or 'kind'.
+                        2. Rewrite it into a polite, kind, and friendly alternative. The vocabulary and tone should be appropriate for a ${age}-year-old. Be creative.
+                        3. Provide a simple, short explanation for a ${age}-year-old about why the new sentence is better.
+                        Format the output as a JSON object with three keys: "rewritten_sentence", "explanation", and "tone".
+                    `;
+                }
+                
+                const payload = { 
+                    contents: [{ role: "user", parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        temperature: 0.8 
+                    }
+                };
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+
+                const result = await response.json();
+                
+                if (result.candidates?.[0]?.content?.parts?.[0]) {
+                    const parsedJson = JSON.parse(result.candidates[0].content.parts[0].text);
+                    
+                    const rewrittenSentence = parsedJson.rewritten_sentence;
+                    rewrittenSentenceEl.textContent = rewrittenSentence;
+                    explanationEl.textContent = parsedJson.explanation;
+                    
+                    if (isSpeechSynthesisSupported) {
+                        playAudioButton.onclick = () => speakText(rewrittenSentence);
+                    }
+                    
+                    updateToneIndicator(parsedJson.tone);
+                    resultsDiv.classList.remove('hidden');
+                } else {
+                    throw new Error("The AI returned an unexpected response.");
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                showError("Sorry, something went wrong. Please try again.");
+            } finally {
+                loader.classList.add('hidden');
+                checkButton.disabled = false;
+                checkButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // --- Helper Functions ---
+        function speakText(text) {
+            if (!isSpeechSynthesisSupported) return;
+            // Cancel any previous speech to avoid overlap
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function updateToneIndicator(assessedTone) {
+            toneButtons.forEach(button => {
+                button.classList.remove('selected');
+                if (button.dataset.tone === assessedTone) {
+                    button.classList.add('selected');
+                }
+            });
+        }
+
+        function showError(message) {
+            errorMessageEl.textContent = message;
+            errorMessageEl.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessageEl.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
