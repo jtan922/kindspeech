@@ -238,6 +238,17 @@
                     `;
                 }
                 
+                // ===================================================================
+                // IMPORTANT: PASTE YOUR GOOGLE AI STUDIO API KEY HERE
+                // ===================================================================
+                const apiKey = "PASTE_YOUR_API_KEY_HERE"; 
+                
+                if (apiKey === "PASTE_YOUR_API_KEY_HERE") {
+                    throw new Error("API Key is missing. Please add it to the code.");
+                }
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                
                 const payload = { 
                     contents: [{ role: "user", parts: [{ text: prompt }] }],
                     generationConfig: {
@@ -245,8 +256,6 @@
                         temperature: 0.8 
                     }
                 };
-                const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
@@ -277,7 +286,7 @@
 
             } catch (error) {
                 console.error("Error:", error);
-                showError("Sorry, something went wrong. Please try again.");
+                showError(error.message);
             } finally {
                 loader.classList.add('hidden');
                 checkButton.disabled = false;
